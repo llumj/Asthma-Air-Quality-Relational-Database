@@ -34,7 +34,6 @@ asthma_2018_2021 <- read.csv(here("data", "asthma_2018_2021.csv")) %>% clean_nam
 airquality_2018_2021 <- rbind(airquality_2018, airquality_2019, airquality_2020, airquality_2021)
 ```
 
-
 ```{r}
 data("fips_codes")
 
@@ -42,7 +41,6 @@ data("fips_codes")
 
 fips_codes$county <- gsub(" County$", "", fips_codes$county)
 ```
-
 
 ```{r}
 # Match and update FIPS codes based on County and State
@@ -62,26 +60,22 @@ asthma_2018_2021 <- asthma_2018_2021 %>%
   select(-county_code, -state.y, -state_code)
 ```
 
-
 ```{r}
 counties <- unique(airquality_2018_2021$county)
 
 print(counties)
 ```
 
-
 ```{r}
 asthma_2018_2021 <- asthma_2018_2021 %>%
   filter(county %in% counties)
 ```
-
 
 ```{r}
 unique(asthma_2018_2021$county)
 
 unique(airquality_2018_2021$county)
 ```
-
 
 ```{r}
 write.csv(airquality_2018_2021, "air_quality_2018_2021.csv", row.names = FALSE)
