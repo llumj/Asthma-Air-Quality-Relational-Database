@@ -7,6 +7,7 @@
 
 **Repository Structure:**
 
+```
 Asthma-Air-Quality-Relational-Database
 │  | README.md
 │    data_viz_database.qmd
@@ -17,6 +18,7 @@ Asthma-Air-Quality-Relational-Database
      └───air-quality
      └───asthma-cases
      └───asthma_air_quality.db
+```
      
 **Data:** This analysis utilizes asthma prevalence data from the Centers for Disease Control and Prevention (CDC) and air quality data from the United States Environmental Protection Agency (EPA). These datasets were obtained from official government sources to examine the relationship between air pollution and asthma cases across Ohio.
 
