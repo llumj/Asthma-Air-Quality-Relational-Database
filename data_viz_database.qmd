@@ -1,22 +1,24 @@
 ---
-title: "Data Viz for Database"
+  title: "Data Viz for Database"
 format: html
 editor: visual
 ---
-
+  
 ```{r}
-library(tidyverse)
-library(DBI)         # low-level database interface, comparable to what we saw in Python
-library(dbplyr)
-library(duckdb)   
+library(duckdb)
+library(DBI)
 ```
 
-Load the Database:
+
+Background
+
+Asthma is a chronic respiratory condition that affects millions worldwide, characterized by airway inflammation and difficulty breathing. Environmental factors, including air pollution, have been widely studied as potential contributors to asthma incidence and exacerbation. Fine particulate matter (PM2.5)—tiny airborne particles measuring less than 2.5 micrometers in diameter—can penetrate deep into the lungs and has been associated with various respiratory illnesses.
+
+Prior studies suggest that high PM2.5 concentrations may trigger asthma attacks, worsen symptoms, and lead to increased emergency hospital visits. However, the direct correlation between long-term exposure to PM2.5 and asthma case prevalence remains debated. Other environmental and socioeconomic variables—such as temperature fluctuations, pollen exposure, urbanization, and healthcare access—may confound the relationship, making PM2.5 only a partial predictor.
 
 ```{r}
-getwd()
-
-conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = "asthma_airquality.db")  # adapt the path as needed
+conn <- dbConnect()
 ```
+
 
 

@@ -14,10 +14,11 @@ library(tidyverse)
 library(here)
 library(janitor)
 library(tigris)
+library(lubridate)
 ```
 
-## Read in data
 
+## Read in data
 ```{r}
 airquality_2018 <- read.csv(here("data", "air_quality_2018.csv")) %>% clean_names()
 
@@ -40,6 +41,7 @@ data("fips_codes")
 # View(fips_codes)
 
 fips_codes$county <- gsub(" County$", "", fips_codes$county)
+
 ```
 
 ```{r}
@@ -47,39 +49,59 @@ fips_codes$county <- gsub(" County$", "", fips_codes$county)
 airquality_2018_2021 <- airquality_2018_2021 %>%
   left_join(fips_codes, by = c("county" = "county", "state" = "state_name")) %>%
   mutate(fips_code = county_code) %>%
-  select(-county_code, -state.y, -state_code)# Remove unnecessary columns from FIPS d
+  select(-county_code, -state.y, -state_code)# Remove unnecessary columns from FIPS 
+
+
+airquality_2018_2021$date <- mdy(airquality_2018_2021$date)  # Convert from "DD/MM/YYYY"
+
+# Add a year column to group by 
+airquality_2018_2021$year <- format(as.Date(airquality_2018_2021$date, format = "%m/%d/%Y"), "%Y")
+
 ```
 
 Add FIPS code to Asthma data
-
 ```{r}
 # Match and update FIPS codes based on County and State
 asthma_2018_2021 <- asthma_2018_2021 %>%
   left_join(fips_codes, by = c("county" = "county", "state" = "state_name")) %>%
   mutate(fips_code = county_code) %>%
-  select(-county_code, -state.y, -state_code)
+  select(-county_code, -state.y, -state_code, -x) %>%
+  mutate(value = parse_number(value) / 100) %>% 
+  rename(asthma_cases = value)
+
 ```
 
 ```{r}
 counties <- unique(airquality_2018_2021$county)
 
 print(counties)
+
 ```
 
 ```{r}
 asthma_2018_2021 <- asthma_2018_2021 %>%
   filter(county %in% counties)
+
 ```
 
 ```{r}
 unique(asthma_2018_2021$county)
 
 unique(airquality_2018_2021$county)
+
 ```
 
 ```{r}
-write.csv(airquality_2018_2021, "air_quality_2018_2021.csv", row.names = FALSE)
+# Group by year 
+airquality_2018_2021_cleaned <- airquality_2018_2021 %>% 
+  group_by(year, county, fips_code) %>%
+  summarise(ave_pm2_5 = median(daily_mean_pm2_5_concentration))
 
-write.csv(asthma_2018_2021, "dataasthma_2018_2021.csv", row.names = FALSE)
+```
+
+```{r}
+write.csv(airquality_2018_2021_cleaned, "air_quality_2018_2021.csv", row.names = FALSE)
+
+write.csv(asthma_2018_2021, "asthma_2018_2021.csv", row.names = FALSE)
 
 ```
