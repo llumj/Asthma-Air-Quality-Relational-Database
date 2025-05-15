@@ -17,8 +17,8 @@ library(tigris)
 library(lubridate)
 ```
 
-
 ## Read in data
+
 ```{r}
 airquality_2018 <- read.csv(here("data", "air_quality_2018.csv")) %>% clean_names()
 
@@ -31,19 +31,20 @@ airquality_2021 <- read.csv(here("data", "air_quality_2021.csv")) %>% clean_name
 asthma_2018_2021 <- read.csv(here("data", "asthma_2018_2021.csv")) %>% clean_names()
 
 # Concat all airquality dataframes into one 
-
 airquality_2018_2021 <- rbind(airquality_2018, airquality_2019, airquality_2020, airquality_2021)
 ```
 
+Bring in FIPS codes for joining 
 ```{r}
+# Bring in fips code data frame 
 data("fips_codes")
 
-# View(fips_codes)
-
+# Seperate county from county name for joining
 fips_codes$county <- gsub(" County$", "", fips_codes$county)
 
 ```
 
+Add FIPS code to the air quality dataframe 
 ```{r}
 # Match and update FIPS codes based on County and State
 airquality_2018_2021 <- airquality_2018_2021 %>%
@@ -71,26 +72,25 @@ asthma_2018_2021 <- asthma_2018_2021 %>%
 
 ```
 
+Air quality has fewer counties because there are only so many air quality stations accross Ohio but asthma cases are shown in all Ohio counties. We can filter our asthma cases to match the extent of the air quality 
 ```{r}
 counties <- unique(airquality_2018_2021$county)
 
 print(counties)
 
-```
-
-```{r}
 asthma_2018_2021 <- asthma_2018_2021 %>%
   filter(county %in% counties)
 
 ```
 
+Check to see if they match!
 ```{r}
 unique(asthma_2018_2021$county)
 
-unique(airquality_2018_2021$county)
-
+unique(airquality_2018_2021_cleaned$county)
 ```
 
+Last step, asthma cases are by year whereas air quality is daily. Summarize the average yearly pm 2.5 to match the time series of asthma cases
 ```{r}
 # Group by year 
 airquality_2018_2021_cleaned <- airquality_2018_2021 %>% 
@@ -99,6 +99,7 @@ airquality_2018_2021_cleaned <- airquality_2018_2021 %>%
 
 ```
 
+Export the dataframes as CSV files to use in our database
 ```{r}
 write.csv(airquality_2018_2021_cleaned, "air_quality_2018_2021.csv", row.names = FALSE)
 

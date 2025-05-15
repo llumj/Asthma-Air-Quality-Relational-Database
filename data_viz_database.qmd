@@ -1,14 +1,8 @@
 ---
-  title: "Data Viz for Database"
+title: "Data Viz for Database"
 format: html
 editor: visual
 ---
-  
-```{r}
-library(duckdb)
-library(DBI)
-```
-
 
 Background
 
@@ -17,8 +11,105 @@ Asthma is a chronic respiratory condition that affects millions worldwide, chara
 Prior studies suggest that high PM2.5 concentrations may trigger asthma attacks, worsen symptoms, and lead to increased emergency hospital visits. However, the direct correlation between long-term exposure to PM2.5 and asthma case prevalence remains debated. Other environmental and socioeconomic variables—such as temperature fluctuations, pollen exposure, urbanization, and healthcare access—may confound the relationship, making PM2.5 only a partial predictor.
 
 ```{r}
-conn <- dbConnect()
+library(duckdb)
+library(DBI)
+library(tigris)
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+
+```
+
+Lets connect to the database and dive into the data!
+
+```{r}
+# Make a connection to the database 
+con <- dbConnect(duckdb::duckdb(), "asthma_air_quality.db")
+
+# Write a query to see whats in the database 
+tables <- dbListTables(con)
+
+# Check out the tables 
+asthma <- dbGetQuery(con, "SELECT * FROM asthma")
+
+air <- dbGetQuery(con, "SELECT * FROM air_quality")
+
+# Now I want to do a join to bring in the air_quality table into the asthma table for graphing 
+air_asthma <- dbGetQuery(con, "SELECT 
+    aq.year,
+    a.county,
+    a.state,
+    aq.fips_code,
+    aq.ave_pm2_5,
+    a.asthma_cases
+FROM air_quality AS aq
+INNER JOIN asthma AS a
+ON aq.year = a.year AND aq.fips_code = a.fips_code
+ORDER BY aq.year, aq.fips_code;")
+```
+
+Now that we have all the data in one place we can examine the relationship between PM2.5 and asthma cases. We can run a simple statistical model to check for correlation
+
+```{r}
+# Create linear model
+model_asthma <- lm(asthma_cases ~ ave_pm2_5, data = air_asthma)
+print(summary(model_asthma))
+```
+
+Key Takeaways - The coefficient for ave_pm2_5 is -0.0001461, which is very close to zero, meaning PM2.5 has little impact on asthma cases in this model.
+
+-   The p-value for ave_pm2_5 is 0.767, which is much greater than the standard threshold for significance (\< 0.05). This indicates that PM2.5 is not a significant predictor of asthma cases.
+
+-   The intercept (0.1045) is highly significant (p \< 2e-16), meaning the baseline rate of asthma cases is important in the model but PM2.5 does not strongly explain variations.
+
+But can this really be true? Research would say probably not. The culprit could be omitted variable bias. Other environmental or socioeconomic factors could be influencing asthma cases (e.g., allergens, temperature, humidity, healthcare access).
+
+Lets visualize the two on map
+
+```{r}
+#| output: false
+# Get county boundaries for Ohio
+ohio_counties <- counties(state = "OH", cb = TRUE, class = "sf")
 ```
 
 
+```{r}
+# Merge asthma data with county map
+ohio_map <- ohio_counties %>%
+  left_join(air_asthma, by = c("COUNTYFP" = "fips_code")) 
 
+# Plot asthma cases on Ohio counties
+plot_1 <- ggplot(ohio_map) +
+  geom_sf(aes(fill = asthma_cases)) +
+  scale_fill_gradient(low = "grey", high = "red3", na.value = "white") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        axis.text = element_blank()) +
+  labs(title = "Asthma Cases by County in Ohio",
+       fill = "Asthma Rate")
+
+# Plot average pm2.5 counts by county
+plot_2 <- ggplot(ohio_map) +
+  geom_sf(aes(fill = ave_pm2_5)) +
+  scale_fill_gradient(low = "grey", high = "red3", na.value = "white") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(),
+        axis.text = element_blank()) +
+  labs(title = "Average PM2.5 Counts by County",
+       fill = "Avg PM2.5")
+
+combined_plots <- plot_1 + plot_2
+
+print(combined_plots)
+```
+
+Conclusion
+
+This study examines the spatial distribution of asthma cases across Ohio counties while considering air quality as a potential influencing factor. By mapping county-level asthma rates alongside air pollution data, the analysis highlights possible environmental health disparities. However, omitted variable bias presents a significant challenge, factors such as socioeconomic status, access to healthcare, genetic predisposition, and indoor air pollution may also contribute to asthma prevalence but were not included in this analysis.
+
+While PM2.5 pollution is often cited as a key environmental determinant of respiratory health, failing to account for additional confounders may lead to biased estimates of its effect. Future research should incorporate these missing variables to refine the relationship between air quality and asthma outcomes. Additionally, policy recommendations based solely on air pollution reduction may be insufficient unless broader social determinants of health are also addressed.
+
+Expanding this work by integrating demographic, healthcare access, and multi-pollutant data would provide a more comprehensive understanding of asthma risk factors. By mitigating omitted variable bias, the analysis can better inform public health initiatives aimed at reducing asthma disparities across Ohio.
