@@ -101,8 +101,8 @@ airquality_2018_2021_cleaned <- airquality_2018_2021 %>%
 
 Export the dataframes as CSV files to use in our database
 ```{r}
-write.csv(airquality_2018_2021_cleaned, "air_quality_2018_2021.csv", row.names = FALSE)
+write.csv(airquality_2018_2021_cleaned, "data/air_quality_2018_2021.csv", row.names = FALSE)
 
-write.csv(asthma_2018_2021, "asthma_2018_2021.csv", row.names = FALSE)
+write.csv(asthma_2018_2021, "data/asthma_2018_2021.csv", row.names = FALSE)
 
 ```

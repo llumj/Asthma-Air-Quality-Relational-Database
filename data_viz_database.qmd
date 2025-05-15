@@ -24,8 +24,9 @@ library(patchwork)
 Lets connect to the database and dive into the data!
 
 ```{r}
+getwd()
 # Make a connection to the database 
-con <- dbConnect(duckdb::duckdb(), "asthma_air_quality.db")
+con <- dbConnect(duckdb::duckdb(), "data/asthma_air_quality.db")
 
 # Write a query to see whats in the database 
 tables <- dbListTables(con)
